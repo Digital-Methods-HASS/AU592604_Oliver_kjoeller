@@ -1,0 +1,64 @@
+---
+title: "practice scraping	"
+author: "Oliver :)"
+date: "07-11-2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# installing packages
+
+```{r libraries, warning=FALSE, message=FALSE}
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+library(ggplot2)
+library(lubridate)
+library(tidyverse)
+```
+
+
+i chose task 2 and decided to scrape data from https://www.worldometers.info/world-population/denmark-population/ 
+
+
+```{r website} 
+#select website:)
+website <- "https://www.worldometers.info/world-population/denmark-population/"
+website_html <- read_html(website)
+```
+
+now we extact the data and turn it into a dataframe :)
+```{r}
+entire_table <- website_html %>% 
+ html_nodes("table")%>%
+ html_table()  
+the_table <- do.call(cbind,unlist(entire_table, recursive = FALSE)) 
+head(the_table) #testing to check that the dataframe works
+```
+
+now generating a graph to show that the dataframe works.
+but first we have to clean up the data since there are duplicate names.
+```{r df}
+#cleaning up the dataset for us
+df<-as.data.frame(the_table)
+df1<-clean_names(df) #using janitor library to clean the data since in our dataset we have multiple cases of bad naming
+#if we are to use our data for matplotlib we have to change the datatype
+df1$year <- as.numeric(df1$year) #transforming our year axis from a character to numeric
+df1$population <- as.numeric(gsub(",","",df1$population)) #same as above but also removing the "," that are used since it bugs out the purpose of our next thing
+
+	
+```
+
+now that our data is cleaned up we can succesfully generate a graph, im going to use the population of Denmark to see if there are any trends in the last few years.
+```{r fleet_table, echo=TRUE, include=TRUE}
+ggplot(data=df1, mapping=aes(x=year, y=population)) + geom_smooth()
+
+```
+we can now see that there is an upward trend in population and our datfarame works :)
