@@ -1,0 +1,151 @@
+---
+title: "Analyzing the simpsons with data"
+author: "Oliver Kjøller"
+output:
+  html_document: default
+  pdf_document: default
+toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# installing packages
+
+```{r libraries, warning=FALSE, message=FALSE}
+library(knitr)
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(lubridate)
+library(tidyverse)
+library(epiDisplay)
+rm(list=ls())
+```
+
+
+# highest rated episodes
+
+```{r warning=FALSE, echo=TRUE}
+Episodes = read.csv("../cds_eksamen/simpsons/simpsons_episodes.csv") 
+
+BestEpisodes = Episodes %>%
+
+  arrange(desc(imdb_rating)) %>%
+
+  dplyr::select(id,season,imdb_rating) %>%
+  
+  head(20)
+
+kable(BestEpisodes)
+
+```
+
+# lowest rated episodes
+
+```{r warning=FALSE}
+
+WorstEpisodes =  Episodes %>%
+
+  arrange((imdb_rating)) %>%
+
+  dplyr::select(id,season,imdb_rating) %>%
+
+  head(20)
+
+kable(WorstEpisodes)
+
+```
+# Imdb scores compared to season
+
+```{r warning=FALSE, fig.align="center"}
+ggplot(data=Episodes, aes(x =season, y=imdb_rating)) +
+  geom_point() +
+  geom_smooth(size = 2, colour='yellow')+
+  labs(x = 'season', y = 'rating from imdb', title = 'imdb rating compared to season')+
+  theme_minimal()
+
+
+```
+
+
+# Most verbal "main" characters
+```{r warning=FALSE, message=FALSE}
+Chars = read.csv("../cds_eksamen/simpsons/simpsons_characters.csv")
+Script = read.csv("../cds_eksamen/simpsons/simpsons_script_lines.csv")
+Script$character_id = as.integer(Script$character_id)
+ScriptCharacters = left_join(Script,Chars, by = c("character_id" = "id") )
+
+ScriptCharacters = ScriptCharacters %>% 
+
+  filter(!is.na(name))
+
+Topchars = ScriptCharacters %>%
+
+  group_by(name) %>%
+
+  tally(sort = TRUE)
+
+ggplot(head(Topchars,43),aes(x = reorder(name, n), 
+
+                     y = n)) + 
+
+  geom_bar(stat='identity',colour="black", fill = "yellow") +
+theme( axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(x = 'most verbal characters in order', y = 'Count Of Sentences', title = '43 most popular characters')
+
+
+```
+
+# Simpsons family sence count
+
+```{r warning=FALSE, message=FALSE}
+ggplot(head(Topchars,4), aes(x = reorder(name, n), 
+
+                     y = n)) +
+
+  geom_bar(stat='identity',colour="black", fill = "yellow") +
+
+  geom_text(aes(x = name, y = 1, label = paste0("(",n,")",sep="")),
+
+            size = 4, colour = 'black',) +
+
+  labs(x = 'most verbal characters in order', y = 'Count Of Sentences', title = 'the 4 verbal members of the families')
+```
+
+# most verbal supporting characters
+
+```{r warning=FALSE, message=FALSE}
+ggplot(Topchars[5:15,], aes(x = reorder(name, n), 
+
+                     y = n)) +
+
+  geom_bar(stat='identity',colour="black", fill = "yellow") +
+
+  geom_text(aes(x = name, y = 1, label = paste0("(",n,")",sep="")),
+
+            size = 4, colour = 'black',) +
+  labs(x = 'most verbal characters in order', y = 'Count Of Sentences', title = '5-15 most verbal charatcers') +
+  
+  coord_flip()
+
+  
+
+```
+
+# gender distribution
+```{r warning=FALSE, message=FALSE}
+Chars$gender[Chars$gender==""] <- NA
+Chars1 = na.omit(Chars)
+tab1(Chars1$gender, sort.group = "decreasing")
+```
+
+
